@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:dev": "nodemon src/index.ts",
-    "register": "nodemon src/index.ts register"
+    "register": "nodemon src/index.ts register",
+    "build": "tsc"
   },
   "author": "Sakeiru/Elye",
   "license": "ISC",
