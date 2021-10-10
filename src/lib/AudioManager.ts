@@ -1,7 +1,7 @@
 import Collection from "@discordjs/collection";
 import { AudioPlayerStatus, AudioResource, DiscordGatewayAdapterCreator, entersState, joinVoiceChannel, VoiceConnectionStatus } from "@discordjs/voice";
 import { Snowflake } from "discord-api-types";
-import { ButtonInteraction, CommandInteraction, GuildMember, Interaction, MessageActionRow, MessageButton, VoiceChannel } from "discord.js";
+import { ButtonInteraction, CommandInteraction, GuildMember, Interaction, MessageActionRow, MessageButton, MessageEmbed, VoiceChannel } from "discord.js";
 import { Ene } from "../Ene";
 import { MusicSubscription } from "./music/Subscription";
 import { Track } from "./music/Track";
@@ -14,6 +14,8 @@ export class AudioManager {
 
     private players : Collection<Snowflake, MusicSubscription>;
 	public holded_queue : Collection<string, YouTubeSearchResults[]>;
+
+	private sequencers : string[] = ["First", "Second", "Third", "Fourth", "Fifth"];
 
     constructor() {
         this.players = new Collection();
@@ -94,17 +96,24 @@ export class AudioManager {
 						new MessageButton().setCustomId(`${interaction.id}_5`).setLabel("5").setStyle("PRIMARY")
 					);
 
-				let content: string = "";
-
 				const R = await youtubeSearch(url, {maxResults: 5, key: client._youtube_key});
+				let desc : string = "";
 
 				this.holded_queue.set(interaction.id, R.results!);
+
+				let embed = new MessageEmbed()
+						.setTitle(`Result for ${url}`)
+						.setFooter(client.user?.username || "???", client.user?.avatarURL() || undefined)
+						.setColor("#1f1f1f")
+						.setThumbnail(R.results[0].thumbnails.default!.url);
 					
 				R.results!.forEach((result, index) => {
-					content += `${index+1} - **${result.title}** ${result.publishedAt}\n`;
+					desc += `[${index+1}] **${result.title}** <${result.link}>\n`;
 				});
+
+				embed.setDescription(desc);
 				
-				await interaction.editReply({content: content, components: [row]});
+				await interaction.editReply({embeds: [embed], components: [row]});
 			} else {
 				// Attempt to create a Track from the user's video URL
 				const track = await Track.from(url, {
@@ -154,10 +163,15 @@ export class AudioManager {
 
 			const queue = subscription.queue
 				.slice(0, 5)
-				.map((track, index) => `${index + 1}) ${track.title}`)
-				.join('\n');
+				.map((track, index) => `**[${index + 1}] ${track.title}** <${track.url}>`);
 
-			await interaction.reply(`${current}\n\n${queue}`);
+			let embed = new MessageEmbed()
+				.setTitle(`Queue for ${interaction.guild?.name || "???"}`)
+				.setFooter(client.user?.username || "???", client.user?.avatarURL() || undefined)
+				.setColor("#1f1f1f")
+				.setDescription(current + "\n\n" + queue.join("\n"));
+				
+			await interaction.reply({embeds: [embed]});
 		} else {
 			await interaction.reply('Not playing in this server!');
 		}
