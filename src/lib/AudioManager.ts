@@ -6,8 +6,7 @@ import { Ene } from "../Ene";
 import { MusicSubscription } from "./music/Subscription";
 import { Track } from "./music/Track";
 
-import youtubeSearch, { YouTubeSearchPageResults, YouTubeSearchResults } from "youtube-search";
-import { off } from "process";
+import youtubeSearch, { YouTubeSearchResults } from "youtube-search";
 
 export class AudioManager {
 	static YOUTUBE_REGEX : RegExp = /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/;
@@ -15,21 +14,19 @@ export class AudioManager {
     private players : Collection<Snowflake, MusicSubscription>;
 	public holded_queue : Collection<string, YouTubeSearchResults[]>;
 
-	private sequencers : string[] = ["First", "Second", "Third", "Fourth", "Fifth"];
-
     constructor() {
         this.players = new Collection();
 		this.holded_queue = new Collection();
     }
 
-	async select_holded(interaction: ButtonInteraction) {
+	async select_holded(client: Ene, interaction: ButtonInteraction) {
 		const [id, index] = interaction.customId.split("_");
 
 		if (!this.holded_queue.has(id)) return;
 
-		const url = this.holded_queue.get(id)![parseInt(index) - 1].link;
+		const item = this.holded_queue.get(id)![parseInt(index) - 1];
 
-		const track = await Track.from(url, {
+		const track = await Track.from(item.link, {
 			onStart() {
 				interaction.followUp({ content: 'Now playing!', ephemeral: false }).catch(console.warn);
 			},
@@ -41,10 +38,18 @@ export class AudioManager {
 				interaction.followUp({ content: `Error: ${error.message}`, ephemeral: false }).catch(console.warn);
 			},
 		});
+
+		const embed = new MessageEmbed()
+			.setTitle("Enqueued")
+			.setFooter(client.user?.username || "???", client.user?.avatarURL() || undefined)
+			.setColor("#1f1f1f")
+			.setThumbnail(item.thumbnails.default!.url)
+			.setDescription(`[${item.title}](${item.link})`);
+
 		// Enqueue the track and reply a success message to the user
 		let subscription = this.players.get(interaction.guild?.id!)!;
 		subscription.enqueue(track);
-		await interaction.update({content:`Enqueued **${track.title}**`, components: []});
+		await interaction.update({components: [], embeds: [embed]});
 	}
 
     async play(client: Ene, interaction: CommandInteraction) : Promise<void> {
@@ -108,7 +113,7 @@ export class AudioManager {
 						.setThumbnail(R.results[0].thumbnails.default!.url);
 					
 				R.results!.forEach((result, index) => {
-					desc += `[${index+1}] **${result.title}** <${result.link}>\n`;
+					desc += `**[${index+1}]** [${result.title}](${result.link})\n`;
 				});
 
 				embed.setDescription(desc);
@@ -163,7 +168,7 @@ export class AudioManager {
 
 			const queue = subscription.queue
 				.slice(0, 5)
-				.map((track, index) => `**[${index + 1}] ${track.title}** <${track.url}>`);
+				.map((track, index) => `**[${index + 1}]** [${track.title}](${track.url})`);
 
 			let embed = new MessageEmbed()
 				.setTitle(`Queue for ${interaction.guild?.name || "???"}`)

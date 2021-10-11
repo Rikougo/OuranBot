@@ -85,7 +85,7 @@ export class Ene extends Client {
                     }
                 }
             } else if (interaction.isButton()) {
-                this.audio_manager.select_holded(interaction);
+                this.audio_manager.select_holded(this, interaction);
             }
         });
     };
