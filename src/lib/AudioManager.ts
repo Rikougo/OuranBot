@@ -28,14 +28,13 @@ export class AudioManager {
 
 		const track = await Track.from(item.link, {
 			onStart() {
-				interaction.followUp({ content: 'Now playing!', ephemeral: false }).catch(console.warn);
+				interaction.editReply('Now playing.').catch(console.warn);
 			},
 			onFinish() {
-				interaction.followUp({ content: 'Now finished!', ephemeral: false }).catch(console.warn);
+				interaction.editReply('Track ended.').catch(console.warn);
 			},
 			onError(error) {
-				console.warn(error);
-				interaction.followUp({ content: `Error: ${error.message}`, ephemeral: false }).catch(console.warn);
+				interaction.editReply(`Error: ${error.message}`).catch(console.warn);
 			},
 		});
 
@@ -123,14 +122,13 @@ export class AudioManager {
 				// Attempt to create a Track from the user's video URL
 				const track = await Track.from(url, {
 					onStart() {
-						interaction.followUp({ content: 'Now playing!', ephemeral: false }).catch(console.warn);
+						interaction.editReply('Now playing.').catch(console.warn);
 					},
 					onFinish() {
-						interaction.followUp({ content: 'Now finished!', ephemeral: false }).catch(console.warn);
+						interaction.editReply('Track ended.').catch(console.warn);
 					},
 					onError(error) {
-						console.warn(error);
-						interaction.followUp({ content: `Error: ${error.message}`, ephemeral: false }).catch(console.warn);
+						interaction.editReply(`Error: ${error.message}`).catch(console.warn);
 					},
 				});
 				// Enqueue the track and reply a success message to the user
